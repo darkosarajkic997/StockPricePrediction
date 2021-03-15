@@ -63,6 +63,21 @@ def evaluate_model(model,X,y,scaler,difference_data):
 
     return math.sqrt(mean_squared_error(Y, predict))
 
+def evaluate_multistep_model(model,X,y,scaler,difference_data,step_out,ts_part=0):
+    predict = model.predict(X)
+    predict = scaler.inverse_transform(predict)
+    Y = scaler.inverse_transform(y)
+
+    predict=np.add(predict,difference_data.values)
+    Y=np.add(Y,difference_data.values)
+
+    errors=list()
+
+    for index in range(0,step_out):
+        errors.append(math.sqrt(mean_squared_error(Y[:,index], predict[:,index])))
+
+    return errors
+
 def plot_result(model,X,y,scaler,difference_data,ts_part=0):
     predict = model.predict(X)
     predict = scaler.inverse_transform(predict)
@@ -75,4 +90,30 @@ def plot_result(model,X,y,scaler,difference_data,ts_part=0):
     plt.plot(predict[ts_part:])
     plt.plot(Y[ts_part:])
     plt.legend(["Predicted vales", "True values"], loc='upper right')
+    plt.show()
+
+def plot_multistep_result(model,X,y,scaler,difference_data,skip=100,step_out=5):
+    predict = model.predict(X)
+    predict = scaler.inverse_transform(predict)
+    Y = scaler.inverse_transform(y)
+    predict=np.add(predict,difference_data.values)
+    Y=np.add(Y,difference_data.values)
+
+    skip_space=skip*step_out
+
+    plt.figure(figsize=(20,8))
+
+    offset=0
+    for index in range(skip_space,predict.shape[0],step_out):
+        start=offset
+        offset+=step_out
+        end=offset
+        if(end+skip_space<predict.shape[0]):
+            x_axis=[x for x in range(start,end+step_out)]
+            values=np.concatenate((Y[start+skip_space:end+skip_space,0],predict[index]))
+   
+        plt.plot(x_axis, values, color='red')
+    
+
+    plt.plot(Y[skip_space:,0],color='blue')
     plt.show()
